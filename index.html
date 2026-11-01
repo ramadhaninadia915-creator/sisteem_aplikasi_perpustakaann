@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Perpustakaan Nadia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&family=Young+Serif&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Tata letak: bilah atas lengket berisi tab (Buku, Anggota, Peminjaman, Reservasi); tiap tab berisi judul, ringkasan angka, lalu satu kartu tabel. Form dan konfirmasi muncul sebagai dialog. */
+:root {
+  --bg: #fff5f8;
+  --surface: #ffffff;
+  --surface-2: #fff9fb;
+  --ink: #4a2c3a;
+  --muted: #86677a;
+  --accent: #c2477a;
+  --accent-strong: #a33a68;
+  --accent-ink: #ffffff;
+  --soft: #ffe3ed;
+  --soft-2: #fff0f5;
+  --line: #f6d3e1;
+  --field: #fffafc;
+  --danger: #b82d49;
+  --danger-bg: #ffe4ea;
+  --ok: #1f7a4d;
+  --ok-bg: #e6f7ee;
+  --warn: #8a5a00;
+  --warn-bg: #fff1d6;
+  --shadow: 0 6px 24px rgba(226, 112, 156, .13);
+  --font-display: "Young Serif", Georgia, "Times New Roman", serif;
+  --font-body: "Nunito Sans", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #2a1620; --surface: #38202c; --surface-2: #3f2433; --ink: #fbe6ee; --muted: #d2a8ba;
+    --accent: #f283aa; --accent-strong: #ff9fc0; --accent-ink: #3a1220; --soft: #4d2a3b; --soft-2: #432636;
+    --line: #5c3447; --field: #2f1a25; --danger: #ff8aa1; --danger-bg: #5a2331; --ok: #7ee0ab; --ok-bg: #1f3b2d;
+    --warn: #ffd089; --warn-bg: #4a3718;
+    --shadow: 0 6px 24px rgba(0, 0, 0, .35); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #2a1620; --surface: #38202c; --surface-2: #3f2433; --ink: #fbe6ee; --muted: #d2a8ba;
+  --accent: #f283aa; --accent-strong: #ff9fc0; --accent-ink: #3a1220; --soft: #4d2a3b; --soft-2: #432636;
+  --line: #5c3447; --field: #2f1a25; --danger: #ff8aa1; --danger-bg: #5a2331; --ok: #7ee0ab; --ok-bg: #1f3b2d;
+  --warn: #ffd089; --warn-bg: #4a3718;
+  --shadow: 0 6px 24px rgba(0, 0, 0, .35); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+}
+h1, h2 { font-family: var(--font-display); font-weight: 400; margin: 0; text-wrap: balance; }
+h1 { font-size: 1.7rem; color: var(--accent-strong); line-height: 1.2; }
+h2 { font-size: 1.3rem; color: var(--accent-strong); }
+p { margin: 0; }
+code, .mono { font-family: var(--font-mono); font-size: .84em; }
+.muted { color: var(--muted); }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.wrap { width: 100%; max-width: 1080px; margin: 0 auto; }
+
+/* ---------- Login ---------- */
+.auth { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding-block: 24px; }
+.login {
+  width: 100%; max-width: 400px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 22px; padding: 32px 28px; box-shadow: var(--shadow);
+}
+.login-mark { width: 64px; height: 64px; border-radius: 50%; background: var(--soft); display: grid; place-items: center; margin-bottom: 16px; }
+.login-mark svg { width: 32px; height: 32px; stroke: var(--accent); }
+.login form { display: grid; gap: 14px; margin-top: 22px; }
+.hint { margin-top: 18px; font-size: .86rem; color: var(--muted); }
+
+/* ---------- Top bar ---------- */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding-inline: max(16px, env(safe-area-inset-left, 0px)); background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--surface); }
+.topbar-in { max-width: 1080px; margin: 0 auto; padding: 10px 0 0; }
+.bar-row { display: flex; align-items: center; gap: 12px; justify-content: space-between; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 1.15rem; color: var(--accent-strong); }
+.brand svg { width: 24px; height: 24px; stroke: var(--accent); flex: none; }
+.who { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.who span { font-size: .92rem; min-width: 0; overflow-wrap: anywhere; }
+.tabs { display: flex; gap: 4px; overflow-x: auto; margin-top: 8px; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { border: 0; background: transparent; padding: 9px 14px; font-weight: 700; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+.tab:hover { color: var(--accent-strong); }
+.tab[aria-current="page"] { color: var(--accent-strong); border-bottom-color: var(--accent); }
+
+/* ---------- Layout ---------- */
+main { padding-block: 26px 12px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+main > * { min-width: 0; }
+.head { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
+.head p { margin-top: 4px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); padding: 18px; }
+footer { text-align: center; color: var(--muted); font-size: .84rem; padding-block: 18px 28px; }
+
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+.stat b { display: block; font-family: var(--font-display); font-weight: 400; font-size: 1.9rem; line-height: 1.1; color: var(--accent); font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: .86rem; }
+.rules { background: var(--soft-2); border: 1px dashed var(--line); border-radius: 12px; padding: 10px 14px; color: var(--muted); font-size: .88rem; }
+
+/* ---------- Buttons & fields ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid transparent; border-radius: 10px;
+  padding: 9px 16px; font-weight: 700; cursor: pointer; text-decoration: none; white-space: nowrap;
+  transition: background .15s, transform .06s;
+}
+.btn:active { transform: translateY(1px); }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover:not([disabled]) { background: var(--accent-strong); }
+.btn-outline { background: transparent; color: var(--accent-strong); border-color: var(--accent); }
+.btn-outline:hover { background: var(--soft-2); }
+.btn-soft { background: var(--soft); color: var(--accent-strong); }
+.btn-soft:hover:not([disabled]) { background: var(--line); }
+.btn-danger { background: var(--danger-bg); color: var(--danger); }
+.btn-danger:hover { filter: brightness(.96); }
+.btn-solid-danger { background: var(--danger); color: var(--surface); }
+.btn-sm { padding: 5px 12px; font-size: .86rem; border-radius: 8px; }
+.btn-block { width: 100%; }
+
+label { display: block; font-weight: 700; font-size: .88rem; margin-bottom: 5px; }
+input[type=text], input[type=password], input[type=search], input[type=number], select {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--field);
+}
+input:focus, select:focus { border-color: var(--accent); }
+.field.err input, .field.err select { border-color: var(--danger); }
+.field-error { display: block; color: var(--danger); font-size: .82rem; margin-top: 4px; }
+.alert { padding: 10px 14px; border-radius: 10px; font-weight: 600; font-size: .92rem; margin-top: 16px; }
+.alert-error { background: var(--danger-bg); color: var(--danger); }
+.alert-warn { background: var(--warn-bg); color: var(--warn); }
+.alert-warn .btn { margin-top: 8px; }
+
+/* ---------- Table ---------- */
+.filter { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.filter input { flex: 1 1 220px; min-width: 0; }
+.filter select { flex: 0 1 190px; width: auto; min-width: 0; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; }
+table { width: 100%; border-collapse: collapse; min-width: 640px; }
+th, td { padding: 11px 14px; text-align: left; vertical-align: top; }
+thead th { background: var(--soft); color: var(--accent-strong); font-size: .84rem; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+tbody tr { border-top: 1px solid var(--line); }
+tbody tr:nth-child(even) { background: var(--surface-2); }
+tbody tr:hover { background: var(--soft-2); }
+td.num, th.num { text-align: center; font-variant-numeric: tabular-nums; }
+td.aksi, th.aksi { text-align: right; white-space: nowrap; }
+.sub { color: var(--muted); font-size: .84rem; }
+.kode { color: var(--muted); }
+.badge { display: inline-block; background: var(--soft); color: var(--accent-strong); border-radius: 999px; padding: 2px 11px; font-size: .8rem; font-weight: 700; white-space: nowrap; }
+.badge-red { background: var(--danger-bg); color: var(--danger); }
+.badge-ok { background: var(--ok-bg); color: var(--ok); }
+.badge-warn { background: var(--warn-bg); color: var(--warn); }
+.empty { text-align: center; color: var(--muted); padding: 36px 16px; }
+.foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.pager { display: flex; gap: 6px; flex-wrap: wrap; }
+.pager button { min-width: 34px; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--accent-strong); cursor: pointer; font-weight: 700; }
+.pager button:hover { background: var(--soft-2); }
+.pager button[aria-current="page"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+/* ---------- Dialog ---------- */
+.overlay { position: fixed; inset: 0; z-index: 50; background: rgba(60, 20, 40, .45); display: grid; place-items: center; padding: 16px; overflow-y: auto; }
+.dialog { width: 100%; max-width: 620px; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+.dialog.small { max-width: 460px; }
+.dialog .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; margin-top: 18px; }
+.dialog .full { grid-column: 1 / -1; }
+.dialog .actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; flex-wrap: wrap; }
+.dialog p.msg { margin-top: 10px; overflow-wrap: anywhere; }
+.detail { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin-top: 16px; background: var(--soft-2); border-radius: 12px; padding: 12px 14px; }
+.detail dt { color: var(--muted); font-size: .88rem; }
+.detail dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.denda { font-family: var(--font-display); font-size: 1.5rem; color: var(--danger); }
+
+/* ---------- Toast ---------- */
+#toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); opacity: 0; pointer-events: none; z-index: 60; background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 12px; font-weight: 700; max-width: calc(100vw - 32px); transition: opacity .2s, transform .2s; }
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+#toast.bad { background: var(--danger); color: var(--surface); }
+
+@media (max-width: 560px) {
+  .dialog .grid { grid-template-columns: 1fr; }
+  .who span { display: none; }
+  h1 { font-size: 1.45rem; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+</head>
+<body>
+<div id="app"></div>
+<div id="modal"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ================= Konstanta & aturan ================= */
+  var KATEGORI = ['Fiksi', 'Non-Fiksi', 'Sains', 'Teknologi', 'Sejarah', 'Pendidikan', 'Agama', 'Lainnya'];
+  var LAMA_PINJAM = 7;      // hari
+  var DENDA_PER_HARI = 1000; // rupiah
+  var MAKS_PINJAM = 3;       // buku aktif per anggota
+  var PER_PAGE = 8;
+  var USER = { username: 'nadia', nama: 'Nadia Ramadhani', password: 'nadia123' };
+  var TABS = [['buku', 'Buku'], ['anggota', 'Anggota'], ['peminjaman', 'Peminjaman'], ['reservasi', 'Reservasi']];
+
+  var K = { buku: 'perpustakaan_nadia_buku_v1', anggota: 'perpustakaan_nadia_anggota_v1', pinjam: 'perpustakaan_nadia_pinjam_v1', resv: 'perpustakaan_nadia_resv_v1', sesi: 'perpustakaan_nadia_sesi_v1' };
+
+  /* ================= Penyimpanan ================= */
+  var mem = {};
+  function store(kind) { try { return kind === 'session' ? window.sessionStorage : window.localStorage; } catch (e) { return null; } }
+  function read(kind, key) {
+    try { var s = store(kind); if (s) { var v = s.getItem(key); if (v !== null) return JSON.parse(v); } } catch (e) {}
+    return key in mem ? mem[key] : null;
+  }
+  function write(kind, key, val) {
+    mem[key] = val;
+    try { var s = store(kind); if (s) { if (val === null) s.removeItem(key); else s.setItem(key, JSON.stringify(val)); } } catch (e) {}
+  }
+
+  /* ================= Tanggal & uang ================= */
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function today() { return ymd(new Date()); }
+  function addDays(s, n) { var p = s.split('-'); return ymd(new Date(+p[0], +p[1] - 1, +p[2] + n)); }
+  function diffDays(a, b) { var pa = a.split('-'), pb = b.split('-'); return Math.round((Date.UTC(+pb[0], +pb[1] - 1, +pb[2]) - Date.UTC(+pa[0], +pa[1] - 1, +pa[2])) / 86400000); }
+  var BLN = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  function fmtTgl(s) { if (!s) return '-'; var p = s.split('-'); return +p[2] + ' ' + BLN[+p[1] - 1] + ' ' + p[0]; }
+  function rp(n) { return 'Rp' + Number(n).toLocaleString('id-ID'); }
+
+  /* ================= Data awal ================= */
+  var SEED_BUKU = [
+    ['BK-001', 'Laskar Pelangi', 'Andrea Hirata', 'Bentang Pustaka', 2005, 'Fiksi', 5],
+    ['BK-002', 'Bumi Manusia', 'Pramoedya Ananta Toer', 'Hasta Mitra', 1980, 'Fiksi', 3],
+    ['BK-003', 'Sapiens: Riwayat Singkat Umat Manusia', 'Yuval Noah Harari', 'KPG', 2017, 'Sejarah', 4],
+    ['BK-004', 'Atomic Habits', 'James Clear', 'Gramedia Pustaka Utama', 2019, 'Non-Fiksi', 6],
+    ['BK-005', 'Clean Code', 'Robert C. Martin', 'Prentice Hall', 2008, 'Teknologi', 2],
+    ['BK-006', 'Cosmos', 'Carl Sagan', 'Random House', 1980, 'Sains', 0]
+  ];
+
+  var books = read('local', K.buku);
+  if (!Array.isArray(books)) {
+    books = SEED_BUKU.map(function (r, i) { return { id: i + 1, kode: r[0], judul: r[1], penulis: r[2], penerbit: r[3], tahun: r[4], kategori: r[5], stok: r[6] }; });
+    write('local', K.buku, books);
+  }
+  var members = read('local', K.anggota);
+  var loans = read('local', K.pinjam);
+  var resvs = read('local', K.resv);
+  if (!Array.isArray(members) || !Array.isArray(loans) || !Array.isArray(resvs)) {
+    var t = today();
+    members = [
+      { id: 1, kode: 'AG-001', nama: 'Sari Wulandari', telp: '0812-3456-7890', status: 'Aktif' },
+      { id: 2, kode: 'AG-002', nama: 'Budi Santoso', telp: '0813-1111-2222', status: 'Aktif' },
+      { id: 3, kode: 'AG-003', nama: 'Putri Maharani', telp: '0857-9988-7766', status: 'Aktif' },
+      { id: 4, kode: 'AG-004', nama: 'Rendra Pratama', telp: '0821-5555-0000', status: 'Nonaktif' }
+    ];
+    loans = [
+      { id: 1, bookId: 4, memberId: 1, tglPinjam: addDays(t, -12), jatuhTempo: addDays(t, -5), tglKembali: null, kondisi: '', denda: 0 },
+      { id: 2, bookId: 1, memberId: 2, tglPinjam: addDays(t, -2), jatuhTempo: addDays(t, 5), tglKembali: null, kondisi: '', denda: 0 },
+      { id: 3, bookId: 3, memberId: 3, tglPinjam: addDays(t, -20), jatuhTempo: addDays(t, -13), tglKembali: addDays(t, -13), kondisi: 'Baik', denda: 0 }
+    ];
+    resvs = [{ id: 1, bookId: 6, memberId: 2, tgl: addDays(t, -1), status: 'Menunggu' }];
+    saveAll();
+  }
+  function saveAll() {
+    write('local', K.buku, books); write('local', K.anggota, members); write('local', K.pinjam, loans); write('local', K.resv, resvs);
+  }
+
+  /* ================= Util ================= */
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function byId(arr, id) { for (var i = 0; i < arr.length; i++) if (arr[i].id === id) return arr[i]; return null; }
+  function nextId(arr) { return arr.reduce(function (m, x) { return Math.max(m, x.id); }, 0) + 1; }
+  var toastTimer;
+  function toast(msg, bad) {
+    var t = $('toast'); t.textContent = msg; t.className = 'show' + (bad ? ' bad' : '');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.className = ''; }, 3600);
+  }
+  var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5v-15z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h6"/></svg>';
+
+  function loanLate(l) { return l.tglKembali ? 0 : Math.max(0, diffDays(l.jatuhTempo, today())); }
+  function loanFine(l) { return l.tglKembali ? l.denda : loanLate(l) * DENDA_PER_HARI; }
+  function activeLoansOf(memberId) { return loans.filter(function (l) { return l.memberId === memberId && !l.tglKembali; }); }
+  function bookLabel(b) { return b ? b.judul : '(buku dihapus)'; }
+  function memberLabel(m) { return m ? m.nama : '(anggota dihapus)'; }
+
+  /* ================= State ================= */
+  var state = { user: read('session', K.sesi), tab: 'buku', q: '', kat: '', page: 1, mq: '', lf: '' };
+  function tabFromHash() { var h = (location.hash || '').replace('#', ''); return TABS.some(function (t) { return t[0] === h; }) ? h : 'buku'; }
+
+  /* ================= Login / logout ================= */
+  function viewLogin(error, username) {
+    $('app').innerHTML =
+      '<div class="auth"><div class="login"><div class="login-mark">' + ICON + '</div>' +
+      '<h1>Perpustakaan Nadia</h1><p class="muted" style="margin-top:6px">Masuk untuk mengelola koleksi, anggota, dan peminjaman.</p>' +
+      '<form id="loginForm" autocomplete="on" novalidate>' +
+      '<div><label for="username">Username atau nama</label><input type="text" id="username" name="username" placeholder="nadia" value="' + esc(username || '') + '" autocomplete="username" required></div>' +
+      '<div><label for="password">Password</label><input type="password" id="password" name="password" autocomplete="current-password" required></div>' +
+      (error ? '<div class="alert alert-error" role="alert">' + esc(error) + '</div>' : '') +
+      '<button type="submit" class="btn btn-primary btn-block">Masuk</button></form>' +
+      '<p class="hint">Akun: <code>nadia</code> / <code>nadia123</code></p></div></div>';
+    $('username').focus();
+  }
+  function doLogin() {
+    var u = $('username').value.trim().toLowerCase(), p = $('password').value;
+    if ((u === USER.username || u === USER.nama.toLowerCase()) && p === USER.password) {
+      state.user = { username: USER.username, nama: USER.nama };
+      write('session', K.sesi, state.user);
+      state.tab = tabFromHash(); state.q = ''; state.kat = ''; state.page = 1; state.mq = ''; state.lf = '';
+      viewApp(); toast('Selamat datang, ' + USER.nama + '!');
+    } else viewLogin('Username atau password salah.', $('username').value);
+  }
+  function logout() {
+    state.user = null; write('session', K.sesi, null); closeModal(); viewLogin(); toast('Anda telah logout. Sampai jumpa!');
+  }
+
+  /* ================= Kerangka aplikasi & tab ================= */
+  function viewApp() {
+    $('app').innerHTML =
+      '<header class="topbar"><div class="topbar-in"><div class="bar-row">' +
+      '<div class="brand">' + ICON + '<span>Perpustakaan Nadia</span></div>' +
+      '<div class="who"><span>Halo, <strong>' + esc(state.user.nama) + '</strong></span><button class="btn btn-outline btn-sm" data-act="logout" type="button">Logout</button></div></div>' +
+      '<nav class="tabs" id="tabs" aria-label="Menu utama"></nav></div></header>' +
+      '<div class="wrap"><main id="content"></main>' +
+      '<footer>&copy; ' + new Date().getFullYear() + ' Perpustakaan Nadia · Data tersimpan di browser ini</footer></div>';
+    showTab(state.tab);
+  }
+  function showTab(tab) {
+    state.tab = tab;
+    $('tabs').innerHTML = TABS.map(function (t) {
+      return '<button type="button" class="tab" data-act="tab" data-tab="' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</button>';
+    }).join('');
+    if (tab === 'buku') shellBuku();
+    else if (tab === 'anggota') shellAnggota();
+    else if (tab === 'peminjaman') shellPinjam();
+    else shellResv();
+  }
+
+  function table(heads, rows, empty, cols) {
+    return '<div class="table-wrap"><table><thead><tr>' + heads.join('') + '</tr></thead><tbody>' +
+      (rows || '<tr><td colspan="' + cols + '" class="empty">' + empty + '</td></tr>') + '</tbody></table></div>';
+  }
+  function pager(page, pages, count, total) {
+    var p = '';
+    if (pages > 1) {
+      p = '<nav class="pager" aria-label="Halaman">';
+      if (page > 1) p += '<button type="button" data-act="page" data-p="' + (page - 1) + '" aria-label="Sebelumnya">&laquo;</button>';
+      for (var i = 1; i <= pages; i++) p += '<button type="button" data-act="page" data-p="' + i + '"' + (i === page ? ' aria-current="page"' : '') + '>' + i + '</button>';
+      if (page < pages) p += '<button type="button" data-act="page" data-p="' + (page + 1) + '" aria-label="Berikutnya">&raquo;</button>';
+      p += '</nav>';
+    }
+    return '<div class="foot"><span class="muted">Menampilkan ' + count + ' dari ' + total + ' data</span>' + p + '</div>';
+  }
+  function statTiles(items) { return items.map(function (i) { return '<div class="stat"><b>' + i[0] + '</b><span>' + i[1] + '</span></div>'; }).join(''); }
+
+  /* ================= Tab: Buku ================= */
+  function shellBuku() {
+    var opts = '<option value="">Semua kategori</option>' + KATEGORI.map(function (k) { return '<option value="' + esc(k) + '"' + (state.kat === k ? ' selected' : '') + '>' + esc(k) + '</option>'; }).join('');
+    $('content').innerHTML =
+      '<div class="head"><div><h1>Daftar Buku</h1><p class="muted">Kelola seluruh koleksi perpustakaan di satu tempat.</p></div><button class="btn btn-primary" data-act="add-buku" type="button">+ Tambah Buku</button></div>' +
+      '<section class="stats" id="stats" aria-label="Ringkasan"></section>' +
+      '<section class="card"><form class="filter" id="filterForm" role="search">' +
+      '<input type="search" id="q" aria-label="Cari buku" placeholder="Cari kode, judul, penulis, atau penerbit…" value="' + esc(state.q) + '">' +
+      '<select id="kat" aria-label="Filter kategori">' + opts + '</select>' +
+      '<button type="button" class="btn btn-outline" id="resetBtn" data-act="reset-buku" hidden>Reset</button></form><div id="listArea"></div></section>';
+    $('q').addEventListener('input', function () { state.q = this.value.trim(); state.page = 1; listBuku(); });
+    $('kat').addEventListener('change', function () { state.kat = this.value; state.page = 1; listBuku(); });
+    listBuku();
+  }
+  function listBuku() {
+    var totalStok = books.reduce(function (s, b) { return s + b.stok; }, 0);
+    var dipinjam = loans.filter(function (l) { return !l.tglKembali; }).length;
+    var habis = books.filter(function (b) { return b.stok === 0; }).length;
+    $('stats').innerHTML = statTiles([[books.length, 'Judul buku'], [totalStok, 'Eksemplar tersedia'], [dipinjam, 'Sedang dipinjam'], [habis, 'Stok habis']]);
+    $('resetBtn').hidden = !(state.q || state.kat);
+    var q = state.q.toLowerCase();
+    var list = books.filter(function (b) {
+      if (state.kat && b.kategori !== state.kat) return false;
+      return !q || [b.kode, b.judul, b.penulis, b.penerbit].some(function (v) { return String(v || '').toLowerCase().indexOf(q) !== -1; });
+    }).sort(function (a, b) { return b.id - a.id; });
+    var pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+    if (state.page > pages) state.page = pages;
+    var start = (state.page - 1) * PER_PAGE, rows = list.slice(start, start + PER_PAGE);
+    var html = rows.map(function (b, i) {
+      return '<tr><td class="num">' + (start + i + 1) + '</td><td class="kode mono">' + esc(b.kode) + '</td>' +
+        '<td><strong>' + esc(b.judul) + '</strong><div class="sub">' + esc((b.penerbit ? b.penerbit + ' · ' : '') + b.tahun) + '</div></td>' +
+        '<td>' + esc(b.penulis) + '</td><td><span class="badge">' + esc(b.kategori) + '</span></td>' +
+        '<td class="num">' + (b.stok === 0 ? '<span class="badge badge-red">Habis</span>' : b.stok) + '</td>' +
+        '<td class="aksi"><button type="button" class="btn btn-soft btn-sm" data-act="edit-buku" data-id="' + b.id + '">Edit</button> ' +
+        '<button type="button" class="btn btn-danger btn-sm" data-act="del-buku" data-id="' + b.id + '">Hapus</button></td></tr>';
+    }).join('');
+    $('listArea').innerHTML = table(['<th class="num">No</th>', '<th>Kode</th>', '<th>Judul</th>', '<th>Penulis</th>', '<th>Kategori</th>', '<th class="num">Stok</th>', '<th class="aksi">Aksi</th>'],
+      html, 'Tidak ada buku yang cocok. Ubah kata kunci atau tambah buku baru.', 7) + pager(state.page, pages, rows.length, list.length);
+  }
+
+  /* ================= Tab: Anggota ================= */
+  function shellAnggota() {
+    $('content').innerHTML =
+      '<div class="head"><div><h1>Anggota</h1><p class="muted">Hanya anggota berstatus Aktif yang boleh meminjam buku.</p></div><button class="btn btn-primary" data-act="add-anggota" type="button">+ Tambah Anggota</button></div>' +
+      '<section class="stats" id="stats"></section>' +
+      '<section class="card"><form class="filter" onsubmit="return false"><input type="search" id="mq" aria-label="Cari anggota" placeholder="Cari kode, nama, atau telepon…" value="' + esc(state.mq) + '"></form><div id="listArea"></div></section>';
+    $('mq').addEventListener('input', function () { state.mq = this.value.trim(); state.page = 1; listAnggota(); });
+    listAnggota();
+  }
+  function listAnggota() {
+    var aktif = members.filter(function (m) { return m.status === 'Aktif'; }).length;
+    var pinjamAktif = loans.filter(function (l) { return !l.tglKembali; }).length;
+    $('stats').innerHTML = statTiles([[members.length, 'Total anggota'], [aktif, 'Anggota aktif'], [members.length - aktif, 'Nonaktif'], [pinjamAktif, 'Pinjaman berjalan']]);
+    var q = state.mq.toLowerCase();
+    var list = members.filter(function (m) { return !q || [m.kode, m.nama, m.telp].some(function (v) { return String(v || '').toLowerCase().indexOf(q) !== -1; }); }).sort(function (a, b) { return a.id - b.id; });
+    var pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+    if (state.page > pages) state.page = pages;
+    var start = (state.page - 1) * PER_PAGE, rows = list.slice(start, start + PER_PAGE);
+    var html = rows.map(function (m) {
+      var n = activeLoansOf(m.id).length;
+      return '<tr><td class="kode mono">' + esc(m.kode) + '</td><td><strong>' + esc(m.nama) + '</strong></td><td>' + esc(m.telp || '-') + '</td>' +
+        '<td><span class="badge ' + (m.status === 'Aktif' ? 'badge-ok' : 'badge-red') + '">' + esc(m.status) + '</span></td>' +
+        '<td class="num">' + n + ' / ' + MAKS_PINJAM + '</td>' +
+        '<td class="aksi"><button type="button" class="btn btn-soft btn-sm" data-act="edit-anggota" data-id="' + m.id + '">Edit</button> ' +
+        '<button type="button" class="btn btn-danger btn-sm" data-act="del-anggota" data-id="' + m.id + '">Hapus</button></td></tr>';
+    }).join('');
+    $('listArea').innerHTML = table(['<th>Kode</th>', '<th>Nama</th>', '<th>Telepon</th>', '<th>Status</th>', '<th class="num">Pinjaman aktif</th>', '<th class="aksi">Aksi</th>'],
+      html, 'Belum ada anggota yang cocok.', 6) + pager(state.page, pages, rows.length, list.length);
+  }
+
+  /* ================= Tab: Peminjaman ================= */
+  function shellPinjam() {
+    $('content').innerHTML =
+      '<div class="head"><div><h1>Peminjaman &amp; Pengembalian</h1><p class="muted">Alur sesuai BPMN: verifikasi anggota, cek stok, catat transaksi, lalu hitung denda saat kembali.</p></div><button class="btn btn-primary" data-act="add-pinjam" type="button">+ Pinjam Buku</button></div>' +
+      '<section class="stats" id="stats"></section>' +
+      '<p class="rules">Aturan: lama pinjam ' + LAMA_PINJAM + ' hari · denda ' + rp(DENDA_PER_HARI) + ' per hari keterlambatan · maksimal ' + MAKS_PINJAM + ' buku aktif per anggota.</p>' +
+      '<section class="card"><form class="filter" onsubmit="return false"><select id="lf" aria-label="Filter status">' +
+      [['', 'Semua transaksi'], ['aktif', 'Sedang dipinjam'], ['terlambat', 'Terlambat'], ['kembali', 'Sudah dikembalikan']].map(function (o) { return '<option value="' + o[0] + '"' + (state.lf === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') +
+      '</select></form><div id="listArea"></div></section>';
+    $('lf').addEventListener('change', function () { state.lf = this.value; state.page = 1; listPinjam(); });
+    listPinjam();
+  }
+  function listPinjam() {
+    var aktif = loans.filter(function (l) { return !l.tglKembali; });
+    var telat = aktif.filter(function (l) { return loanLate(l) > 0; });
+    var totalDenda = telat.reduce(function (s, l) { return s + loanFine(l); }, 0);
+    $('stats').innerHTML = statTiles([[aktif.length, 'Sedang dipinjam'], [telat.length, 'Terlambat'], [rp(totalDenda), 'Denda berjalan'], [loans.length - aktif.length, 'Sudah kembali']]);
+    var list = loans.filter(function (l) {
+      if (state.lf === 'aktif') return !l.tglKembali;
+      if (state.lf === 'terlambat') return !l.tglKembali && loanLate(l) > 0;
+      if (state.lf === 'kembali') return !!l.tglKembali;
+      return true;
+    }).sort(function (a, b) { return b.id - a.id; });
+    var pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+    if (state.page > pages) state.page = pages;
+    var start = (state.page - 1) * PER_PAGE, rows = list.slice(start, start + PER_PAGE);
+    var html = rows.map(function (l) {
+      var b = byId(books, l.bookId), m = byId(members, l.memberId), late = loanLate(l), fine = loanFine(l), badge;
+      if (l.tglKembali) badge = '<span class="badge badge-ok">Dikembalikan</span>';
+      else if (late > 0) badge = '<span class="badge badge-red">Terlambat ' + late + ' hari</span>';
+      else badge = '<span class="badge badge-warn">Dipinjam</span>';
+      return '<tr><td><strong>' + esc(bookLabel(b)) + '</strong><div class="sub mono">' + esc(b ? b.kode : '') + '</div></td>' +
+        '<td>' + esc(memberLabel(m)) + '<div class="sub mono">' + esc(m ? m.kode : '') + '</div></td>' +
+        '<td>' + fmtTgl(l.tglPinjam) + '</td><td>' + fmtTgl(l.jatuhTempo) + '</td><td>' + (l.tglKembali ? fmtTgl(l.tglKembali) : '-') + '</td>' +
+        '<td>' + badge + '</td><td class="num">' + (fine > 0 ? rp(fine) : '-') + '</td>' +
+        '<td class="aksi">' + (l.tglKembali ? '' : '<button type="button" class="btn btn-soft btn-sm" data-act="return" data-id="' + l.id + '">Kembalikan</button>') + '</td></tr>';
+    }).join('');
+    $('listArea').innerHTML = table(['<th>Buku</th>', '<th>Peminjam</th>', '<th>Tgl pinjam</th>', '<th>Jatuh tempo</th>', '<th>Kembali</th>', '<th>Status</th>', '<th class="num">Denda</th>', '<th class="aksi">Aksi</th>'],
+      html, 'Belum ada transaksi. Klik "Pinjam Buku" untuk mencatat peminjaman.', 8) + pager(state.page, pages, rows.length, list.length);
+  }
+
+  /* ================= Tab: Reservasi ================= */
+  function shellResv() {
+    $('content').innerHTML =
+      '<div class="head"><div><h1>Reservasi</h1><p class="muted">Antrean untuk buku yang stoknya habis. Buku bisa dipinjamkan setelah stok kembali.</p></div><button class="btn btn-primary" data-act="add-resv" type="button">+ Reservasi Baru</button></div>' +
+      '<section class="stats" id="stats"></section><section class="card"><div id="listArea"></div></section>';
+    listResv();
+  }
+  function firstInQueue(r) {
+    return !resvs.some(function (o) { return o.status === 'Menunggu' && o.bookId === r.bookId && o.id < r.id; });
+  }
+  function resvReady(r) {
+    var b = byId(books, r.bookId);
+    return r.status === 'Menunggu' && !!b && b.stok > 0 && firstInQueue(r);
+  }
+  function listResv() {
+    var tunggu = resvs.filter(function (r) { return r.status === 'Menunggu'; });
+    var siap = tunggu.filter(function (r) { return resvReady(r); });
+    $('stats').innerHTML = statTiles([[tunggu.length, 'Dalam antrean'], [siap.length, 'Siap dipinjamkan'], [resvs.filter(function (r) { return r.status === 'Selesai'; }).length, 'Selesai'], [resvs.filter(function (r) { return r.status === 'Batal'; }).length, 'Dibatalkan']]);
+    var list = resvs.slice().sort(function (a, b) { return b.id - a.id; });
+    var html = list.map(function (r) {
+      var b = byId(books, r.bookId), m = byId(members, r.memberId), ready = resvReady(r), badge;
+      var giliran = r.status === 'Menunggu' && firstInQueue(r);
+      if (r.status === 'Selesai') badge = '<span class="badge badge-ok">Selesai</span>';
+      else if (r.status === 'Batal') badge = '<span class="badge badge-red">Dibatalkan</span>';
+      else if (ready) badge = '<span class="badge badge-ok">Giliran Anda: buku tersedia</span>';
+      else badge = '<span class="badge badge-warn">' + (giliran ? 'Menunggu stok' : 'Antre di belakang') + '</span>';
+      var act = r.status !== 'Menunggu' ? '' :
+        '<button type="button" class="btn btn-soft btn-sm" data-act="resv-pinjam" data-id="' + r.id + '"' + (ready ? '' : ' disabled title="Belum giliran atau stok masih habis"') + '>Pinjamkan</button> ' +
+        '<button type="button" class="btn btn-danger btn-sm" data-act="resv-batal" data-id="' + r.id + '">Batalkan</button>';
+      return '<tr><td><strong>' + esc(bookLabel(b)) + '</strong><div class="sub mono">' + esc(b ? b.kode : '') + ' · stok ' + (b ? b.stok : 0) + '</div></td>' +
+        '<td>' + esc(memberLabel(m)) + '<div class="sub mono">' + esc(m ? m.kode : '') + '</div></td><td>' + fmtTgl(r.tgl) + '</td><td>' + badge + '</td><td class="aksi">' + act + '</td></tr>';
+    }).join('');
+    $('listArea').innerHTML = table(['<th>Buku</th>', '<th>Pemesan</th>', '<th>Tgl reservasi</th>', '<th>Status</th>', '<th class="aksi">Aksi</th>'], html, 'Belum ada reservasi.', 5);
+  }
+
+  function refresh() {
+    if (state.tab === 'buku') listBuku(); else if (state.tab === 'anggota') listAnggota(); else if (state.tab === 'peminjaman') listPinjam(); else listResv();
+  }
+
+  /* ================= Dialog umum ================= */
+  var dlg = null;
+  function closeModal() { $('modal').innerHTML = ''; dlg = null; }
+  function shell(id, title, sub, inner, actions, small) {
+    return '<div class="overlay" data-act="overlay"><form class="dialog' + (small ? ' small' : '') + '" id="' + id + '" role="dialog" aria-modal="true" aria-labelledby="dlgTitle" novalidate>' +
+      '<h2 id="dlgTitle">' + title + '</h2>' + (sub ? '<p class="muted" style="margin-top:4px">' + sub + '</p>' : '') + inner +
+      '<div class="actions">' + actions + '</div></form></div>';
+  }
+  function cancelBtn() { return '<button type="button" class="btn btn-outline" data-act="close">Batal</button>'; }
+  function fld(name, label, type, attrs, full) {
+    var er = dlg.errors[name];
+    return '<div class="field' + (er ? ' err' : '') + (full ? ' full' : '') + '"><label for="f_' + name + '">' + label + '</label>' +
+      '<input type="' + type + '" id="f_' + name + '" name="' + name + '" value="' + esc(dlg.data[name]) + '"' + (attrs || '') + '>' +
+      (er ? '<span class="field-error">' + esc(er) + '</span>' : '') + '</div>';
+  }
+  function sel(name, label, options, current, full) {
+    var er = dlg.errors[name];
+    return '<div class="field' + (er ? ' err' : '') + (full ? ' full' : '') + '"><label for="f_' + name + '">' + label + '</label><select id="f_' + name + '" name="' + name + '">' +
+      options.map(function (o) { return '<option value="' + esc(o[0]) + '"' + (String(o[0]) === String(current) ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('') +
+      '</select>' + (er ? '<span class="field-error">' + esc(er) + '</span>' : '') + '</div>';
+  }
+  function focusFirst() { var f = document.querySelector('.dialog .field.err input, .dialog .field.err select') || document.querySelector('.dialog input, .dialog select'); if (f) f.focus(); }
+  function open(d) { dlg = d; renderDlg(); focusFirst(); }
+
+  function renderDlg() {
+    var d = dlg, h = '';
+    if (d.type === 'buku') {
+      var edit = !!d.id;
+      h = shell('bookForm', edit ? 'Edit Buku' : 'Tambah Buku', edit ? 'Perbarui data buku di bawah ini.' : 'Isi data buku baru untuk koleksi perpustakaan.',
+        '<div class="grid">' + fld('kode', 'Kode buku *', 'text', ' maxlength="20"') +
+        sel('kategori', 'Kategori *', KATEGORI.map(function (k) { return [k, k]; }), d.data.kategori) +
+        fld('judul', 'Judul *', 'text', ' maxlength="200"', true) + fld('penulis', 'Penulis *', 'text', ' maxlength="150"') + fld('penerbit', 'Penerbit', 'text', ' maxlength="150"') +
+        fld('tahun', 'Tahun terbit *', 'number', ' min="1000" max="' + (new Date().getFullYear() + 1) + '"') + fld('stok', 'Stok (eksemplar) *', 'number', ' min="0"') + '</div>',
+        cancelBtn() + '<button type="submit" class="btn btn-primary">' + (edit ? 'Simpan perubahan' : 'Simpan buku') + '</button>');
+    } else if (d.type === 'anggota') {
+      var ed = !!d.id;
+      h = shell('memberForm', ed ? 'Edit Anggota' : 'Tambah Anggota', ed ? 'Perbarui data anggota.' : 'Daftarkan anggota baru perpustakaan.',
+        '<div class="grid">' + fld('nama', 'Nama lengkap *', 'text', ' maxlength="100"', true) + fld('telp', 'Telepon', 'text', ' maxlength="30"') +
+        sel('status', 'Status kartu *', [['Aktif', 'Aktif'], ['Nonaktif', 'Nonaktif']], d.data.status) + '</div>',
+        cancelBtn() + '<button type="submit" class="btn btn-primary">' + (ed ? 'Simpan perubahan' : 'Simpan anggota') + '</button>');
+    } else if (d.type === 'pinjam') {
+      var mo = [['', '— pilih anggota —']].concat(members.map(function (m) { return [m.id, m.kode + ' · ' + m.nama + (m.status !== 'Aktif' ? ' (Nonaktif)' : '')]; }));
+      var bo = [['', '— pilih buku —']].concat(books.map(function (b) { return [b.id, b.kode + ' · ' + b.judul + ' (stok ' + b.stok + ')']; }));
+      h = shell('loanForm', 'Pinjam Buku', 'Jatuh tempo otomatis ' + LAMA_PINJAM + ' hari dari hari ini.',
+        '<div class="grid">' + sel('memberId', 'Anggota *', mo, d.data.memberId, true) + sel('bookId', 'Buku *', bo, d.data.bookId, true) + '</div>' +
+        (d.notice ? '<div class="alert alert-warn" role="alert">' + d.notice + '</div>' : ''),
+        cancelBtn() + '<button type="submit" class="btn btn-primary">Proses peminjaman</button>');
+    } else if (d.type === 'resv') {
+      var mo2 = [['', '— pilih anggota —']].concat(members.map(function (m) { return [m.id, m.kode + ' · ' + m.nama + (m.status !== 'Aktif' ? ' (Nonaktif)' : '')]; }));
+      var bo2 = [['', '— pilih buku —']].concat(books.map(function (b) { return [b.id, b.kode + ' · ' + b.judul + ' (stok ' + b.stok + ')']; }));
+      h = shell('resvForm', 'Reservasi Baru', 'Reservasi hanya untuk buku yang stoknya habis.',
+        '<div class="grid">' + sel('memberId', 'Anggota *', mo2, d.data.memberId, true) + sel('bookId', 'Buku *', bo2, d.data.bookId, true) + '</div>',
+        cancelBtn() + '<button type="submit" class="btn btn-primary">Catat reservasi</button>');
+    } else if (d.type === 'return') {
+      var l = byId(loans, d.id), b = byId(books, l.bookId), m = byId(members, l.memberId), late = loanLate(l), fine = loanFine(l);
+      h = shell('returnForm', 'Pengembalian Buku', 'Periksa kondisi buku, lalu sistem menghitung denda.',
+        '<dl class="detail"><dt>Buku</dt><dd>' + esc(bookLabel(b)) + '</dd><dt>Peminjam</dt><dd>' + esc(memberLabel(m)) + '</dd>' +
+        '<dt>Tgl pinjam</dt><dd>' + fmtTgl(l.tglPinjam) + '</dd><dt>Jatuh tempo</dt><dd>' + fmtTgl(l.jatuhTempo) + '</dd>' +
+        '<dt>Keterlambatan</dt><dd>' + (late > 0 ? late + ' hari' : 'Tepat waktu') + '</dd>' +
+        '<dt>Denda</dt><dd>' + (fine > 0 ? '<span class="denda">' + rp(fine) + '</span>' : 'Tidak ada denda') + '</dd></dl>' +
+        '<div class="grid">' + sel('kondisi', 'Kondisi buku', [['Baik', 'Baik'], ['Rusak ringan', 'Rusak ringan']], d.data.kondisi, true) + '</div>',
+        cancelBtn() + '<button type="submit" class="btn btn-primary">' + (fine > 0 ? 'Terima pembayaran &amp; selesaikan' : 'Proses pengembalian') + '</button>');
+    } else if (d.type === 'del') {
+      var what = d.kind === 'buku' ? byId(books, d.id) : byId(members, d.id);
+      var nm = d.kind === 'buku' ? what.judul : what.nama;
+      h = '<div class="overlay" data-act="overlay"><div class="dialog small" role="alertdialog" aria-modal="true" aria-labelledby="dlgTitle"><h2 id="dlgTitle">' + (d.kind === 'buku' ? 'Hapus buku?' : 'Hapus anggota?') + '</h2>' +
+        '<p class="msg"><strong>' + esc(nm) + '</strong> (' + esc(what.kode) + ') akan dihapus dan tidak bisa dikembalikan.</p>' +
+        '<div class="actions"><button type="button" class="btn btn-outline" data-act="close" id="delCancel">Batal</button><button type="button" class="btn btn-solid-danger" data-act="delok">Ya, hapus</button></div></div></div>';
+    }
+    $('modal').innerHTML = h;
+  }
+
+  function readForm(f) { var o = {}; Array.prototype.forEach.call(f.elements, function (el) { if (el.name) o[el.name] = el.value.trim(); }); return o; }
+
+  /* ================= Aturan bisnis (sesuai BPMN) ================= */
+  // Mengembalikan { ok, error, habis } untuk transaksi pinjam
+  function cekPinjam(memberId, bookId) {
+    var m = byId(members, memberId), b = byId(books, bookId);
+    if (!m) return { error: { memberId: 'Pilih anggota terlebih dahulu.' } };
+    if (!b) return { error: { bookId: 'Pilih buku terlebih dahulu.' } };
+    if (m.status !== 'Aktif') return { error: { memberId: 'Kartu anggota tidak valid (Nonaktif). Peminjaman ditolak.' } };
+    var aktif = activeLoansOf(m.id);
+    if (aktif.some(function (l) { return loanLate(l) > 0; })) return { error: { memberId: 'Anggota masih punya buku terlambat. Kembalikan dulu sebelum meminjam lagi.' } };
+    if (aktif.length >= MAKS_PINJAM) return { error: { memberId: 'Batas ' + MAKS_PINJAM + ' buku aktif sudah tercapai.' } };
+    if (aktif.some(function (l) { return l.bookId === b.id; })) return { error: { bookId: 'Anggota ini sedang meminjam buku yang sama.' } };
+    if (b.stok <= 0) return { habis: true, m: m, b: b };
+    return { ok: true, m: m, b: b };
+  }
+  function buatPinjam(m, b) {
+    var t = today();
+    loans.push({ id: nextId(loans), bookId: b.id, memberId: m.id, tglPinjam: t, jatuhTempo: addDays(t, LAMA_PINJAM), tglKembali: null, kondisi: '', denda: 0 });
+    b.stok -= 1; saveAll();
+    return addDays(t, LAMA_PINJAM);
+  }
+
+  /* ================= Submit form ================= */
+  function submitBuku(f) {
+    var d = readForm(f), er = {}, thisYear = new Date().getFullYear(); d.kode = d.kode.toUpperCase();
+    if (!d.kode) er.kode = 'Kode buku wajib diisi.';
+    else if (!/^[A-Z0-9\-_.]{2,20}$/.test(d.kode)) er.kode = 'Hanya huruf, angka, strip, titik (2–20 karakter).';
+    else if (books.some(function (b) { return b.kode === d.kode && b.id !== dlg.id; })) er.kode = 'Kode buku sudah dipakai buku lain.';
+    if (!d.judul || d.judul.length > 200) er.judul = 'Judul wajib diisi (maksimal 200 karakter).';
+    if (!d.penulis || d.penulis.length > 150) er.penulis = 'Penulis wajib diisi (maksimal 150 karakter).';
+    if (d.penerbit.length > 150) er.penerbit = 'Penerbit maksimal 150 karakter.';
+    if (!/^\d{4}$/.test(d.tahun) || +d.tahun < 1000 || +d.tahun > thisYear + 1) er.tahun = 'Tahun terbit tidak valid.';
+    if (KATEGORI.indexOf(d.kategori) === -1) er.kategori = 'Pilih kategori yang tersedia.';
+    if (!/^\d+$/.test(d.stok) || +d.stok > 100000) er.stok = 'Stok harus angka 0 atau lebih.';
+    dlg.data = d; dlg.errors = er;
+    if (Object.keys(er).length) { renderDlg(); focusFirst(); return; }
+    var rec = { kode: d.kode, judul: d.judul, penulis: d.penulis, penerbit: d.penerbit, tahun: +d.tahun, kategori: d.kategori, stok: +d.stok };
+    if (dlg.id) { books = books.map(function (b) { return b.id === dlg.id ? Object.assign({ id: b.id }, rec) : b; }); toast('Buku "' + d.judul + '" berhasil diperbarui.'); }
+    else { rec.id = nextId(books); books.push(rec); state.page = 1; toast('Buku "' + d.judul + '" berhasil ditambahkan.'); }
+    saveAll(); closeModal(); refresh();
+  }
+  function submitAnggota(f) {
+    var d = readForm(f), er = {};
+    if (!d.nama || d.nama.length > 100) er.nama = 'Nama wajib diisi (maksimal 100 karakter).';
+    if (d.telp && !/^[0-9+\-\s()]{6,30}$/.test(d.telp)) er.telp = 'Nomor telepon tidak valid.';
+    if (['Aktif', 'Nonaktif'].indexOf(d.status) === -1) er.status = 'Pilih status.';
+    dlg.data = d; dlg.errors = er;
+    if (Object.keys(er).length) { renderDlg(); focusFirst(); return; }
+    if (dlg.id) { var m = byId(members, dlg.id); m.nama = d.nama; m.telp = d.telp; m.status = d.status; toast('Anggota "' + d.nama + '" berhasil diperbarui.'); }
+    else { var id = nextId(members); members.push({ id: id, kode: 'AG-' + String(id).padStart(3, '0'), nama: d.nama, telp: d.telp, status: d.status }); toast('Anggota "' + d.nama + '" berhasil ditambahkan.'); }
+    saveAll(); closeModal(); refresh();
+  }
+  function submitPinjam(f) {
+    var d = readForm(f); dlg.data = d; dlg.errors = {}; dlg.notice = '';
+    var r = cekPinjam(+d.memberId, +d.bookId);
+    if (r.error) { dlg.errors = r.error; renderDlg(); focusFirst(); return; }
+    if (r.habis) {
+      dlg.notice = 'Buku <strong>' + esc(r.b.judul) + '</strong> sedang tidak tersedia (stok 0). Anggota bisa masuk antrean reservasi.<br><button type="button" class="btn btn-soft btn-sm" data-act="resv-from-pinjam">Catat reservasi</button>';
+      renderDlg(); return;
+    }
+    var due = buatPinjam(r.m, r.b);
+    closeModal(); refresh(); toast('Peminjaman dicatat. Jatuh tempo ' + fmtTgl(due) + '.');
+  }
+  function simpanReservasi(m, b) {
+    resvs.push({ id: nextId(resvs), bookId: b.id, memberId: m.id, tgl: today(), status: 'Menunggu' }); saveAll();
+  }
+  function cekReservasi(memberId, bookId) {
+    var m = byId(members, memberId), b = byId(books, bookId), er = {};
+    if (!m) er.memberId = 'Pilih anggota terlebih dahulu.';
+    else if (m.status !== 'Aktif') er.memberId = 'Kartu anggota tidak valid (Nonaktif).';
+    if (!b) er.bookId = 'Pilih buku terlebih dahulu.';
+    else if (b.stok > 0) er.bookId = 'Buku masih tersedia (stok ' + b.stok + '). Silakan pinjam langsung.';
+    else if (m && resvs.some(function (r) { return r.status === 'Menunggu' && r.bookId === b.id && r.memberId === m.id; })) er.bookId = 'Anggota ini sudah mengantre untuk buku tersebut.';
+    return { er: er, m: m, b: b };
+  }
+  function submitResv(f) {
+    var d = readForm(f), r = cekReservasi(+d.memberId, +d.bookId); dlg.data = d; dlg.errors = r.er;
+    if (Object.keys(r.er).length) { renderDlg(); focusFirst(); return; }
+    simpanReservasi(r.m, r.b); closeModal(); refresh(); toast('Reservasi dicatat. ' + r.m.nama + ' masuk antrean.');
+  }
+  function submitReturn(f) {
+    var d = readForm(f), l = byId(loans, dlg.id); if (!l || l.tglKembali) { closeModal(); return; }
+    var fine = loanFine(l), b = byId(books, l.bookId);
+    l.tglKembali = today(); l.denda = fine; l.kondisi = d.kondisi === 'Rusak ringan' ? 'Rusak ringan' : 'Baik';
+    if (b) b.stok += 1;
+    saveAll(); closeModal(); refresh();
+    var antre = b ? resvs.filter(function (r) { return r.status === 'Menunggu' && r.bookId === b.id; }).length : 0;
+    toast((fine > 0 ? 'Pembayaran denda ' + rp(fine) + ' diterima. ' : '') + 'Buku dikembalikan, stok diperbarui.' + (antre ? ' Ada ' + antre + ' reservasi menunggu buku ini.' : ''));
+  }
+
+  /* ================= Event ================= */
+  document.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var id = e.target.id;
+    if (id === 'loginForm') doLogin();
+    else if (!dlg) return;
+    else if (id === 'bookForm') submitBuku(e.target);
+    else if (id === 'memberForm') submitAnggota(e.target);
+    else if (id === 'loanForm') submitPinjam(e.target);
+    else if (id === 'resvForm') submitResv(e.target);
+    else if (id === 'returnForm') submitReturn(e.target);
+  });
+
+  function newBukuData() { var n = nextId(books); return { kode: 'BK-' + String(n).padStart(3, '0'), judul: '', penulis: '', penerbit: '', tahun: String(new Date().getFullYear()), kategori: 'Fiksi', stok: '1' }; }
+
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest ? e.target.closest('[data-act]') : null; if (!el) return;
+    var act = el.getAttribute('data-act'), id = +el.getAttribute('data-id');
+    if (act === 'overlay') { if (e.target === el) closeModal(); return; }
+    switch (act) {
+      case 'logout': logout(); break;
+      case 'close': closeModal(); break;
+      case 'tab': state.page = 1; if (location.hash.replace('#', '') !== el.getAttribute('data-tab')) location.hash = el.getAttribute('data-tab'); else showTab(el.getAttribute('data-tab')); break;
+      case 'page': state.page = +el.getAttribute('data-p'); refresh(); break;
+      case 'reset-buku': state.q = ''; state.kat = ''; state.page = 1; $('q').value = ''; $('kat').value = ''; listBuku(); break;
+      case 'add-buku': open({ type: 'buku', id: 0, data: newBukuData(), errors: {} }); break;
+      case 'edit-buku':
+        var b = byId(books, id); if (!b) { toast('Buku tidak ditemukan.', true); break; }
+        open({ type: 'buku', id: id, data: { kode: b.kode, judul: b.judul, penulis: b.penulis, penerbit: b.penerbit, tahun: String(b.tahun), kategori: b.kategori, stok: String(b.stok) }, errors: {} }); break;
+      case 'del-buku':
+        if (loans.some(function (l) { return l.bookId === id && !l.tglKembali; })) { toast('Buku tidak bisa dihapus: masih ada yang meminjam.', true); break; }
+        open({ type: 'del', kind: 'buku', id: id }); $('delCancel').focus(); break;
+      case 'add-anggota': open({ type: 'anggota', id: 0, data: { nama: '', telp: '', status: 'Aktif' }, errors: {} }); break;
+      case 'edit-anggota':
+        var m = byId(members, id); if (!m) break;
+        open({ type: 'anggota', id: id, data: { nama: m.nama, telp: m.telp, status: m.status }, errors: {} }); break;
+      case 'del-anggota':
+        if (activeLoansOf(id).length) { toast('Anggota tidak bisa dihapus: masih punya pinjaman aktif.', true); break; }
+        open({ type: 'del', kind: 'anggota', id: id }); $('delCancel').focus(); break;
+      case 'delok':
+        if (dlg.kind === 'buku') { var bk = byId(books, dlg.id); books = books.filter(function (x) { return x.id !== dlg.id; }); toast('Buku "' + (bk ? bk.judul : '') + '" berhasil dihapus.'); }
+        else { var mm = byId(members, dlg.id); members = members.filter(function (x) { return x.id !== dlg.id; }); toast('Anggota "' + (mm ? mm.nama : '') + '" berhasil dihapus.'); }
+        saveAll(); closeModal(); refresh(); break;
+      case 'add-pinjam': open({ type: 'pinjam', data: { memberId: '', bookId: '' }, errors: {}, notice: '' }); break;
+      case 'return': open({ type: 'return', id: id, data: { kondisi: 'Baik' }, errors: {} }); break;
+      case 'add-resv': open({ type: 'resv', data: { memberId: '', bookId: '' }, errors: {} }); break;
+      case 'resv-from-pinjam':
+        var rr = cekReservasi(+dlg.data.memberId, +dlg.data.bookId);
+        if (Object.keys(rr.er).length) { dlg.errors = rr.er; dlg.notice = ''; renderDlg(); break; }
+        simpanReservasi(rr.m, rr.b); closeModal(); refresh(); toast('Buku tidak tersedia, reservasi dicatat. ' + rr.m.nama + ' masuk antrean.'); break;
+      case 'resv-batal':
+        var rb = byId(resvs, id); if (rb) { rb.status = 'Batal'; saveAll(); refresh(); toast('Reservasi dibatalkan.'); } break;
+      case 'resv-pinjam':
+        var rv = byId(resvs, id); if (!rv) break;
+        if (!firstInQueue(rv)) { toast('Masih ada antrean yang lebih dulu untuk buku ini.', true); break; }
+        var c = cekPinjam(rv.memberId, rv.bookId);
+        if (c.error) { toast(c.error.memberId || c.error.bookId, true); break; }
+        if (c.habis) { toast('Stok buku masih habis.', true); break; }
+        var due = buatPinjam(c.m, c.b); rv.status = 'Selesai'; saveAll(); refresh();
+        toast('Reservasi dipenuhi, buku dipinjamkan. Jatuh tempo ' + fmtTgl(due) + '.'); break;
+    }
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('modal').firstChild) closeModal(); });
+  window.addEventListener('hashchange', function () { if (state.user) { state.page = 1; showTab(tabFromHash()); } });
+
+  /* ================= Mulai ================= */
+  state.tab = tabFromHash();
+  if (state.user && state.user.username === USER.username) viewApp(); else viewLogin();
+})();
+</script>
+
+</body>
+</html>
